@@ -30,6 +30,8 @@ vendor/
 
 # Logs
 *.log
+.env
 
-# Coverage files
 coverage.out
+storage
+/config
