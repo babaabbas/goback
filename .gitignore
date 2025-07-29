@@ -31,5 +31,7 @@ vendor/
 # Logs
 *.log
 
-# Coverage files
+
 coverage.out
+storage
+/config
