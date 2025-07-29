@@ -34,5 +34,5 @@ vendor/
 .gitignore
 
 coverage.out
-storage
-/config
+/storage/
+/config/
