@@ -11,7 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	config "github.com/babaabbas/goback/internal"
+	"github.com/babaabbas/goback/internal/config"
+	"github.com/babaabbas/goback/internal/http/handlers/student"
 )
 
 func main() {
@@ -21,10 +22,7 @@ func main() {
 	//database setup
 	//setup router
 	router := http.NewServeMux()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-
-		w.Write([]byte("welcome to students api"))
-	})
+	router.HandleFunc("POST /api/students", student.New())
 
 	//setup server
 	server := http.Server{
