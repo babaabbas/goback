@@ -13,6 +13,7 @@ import (
 
 	"github.com/babaabbas/goback/internal/config"
 	"github.com/babaabbas/goback/internal/http/handlers/student"
+	"github.com/babaabbas/goback/internal/storage/sqlite"
 )
 
 func main() {
@@ -20,9 +21,14 @@ func main() {
 	cfg := config.Must_Load()
 	fmt.Println(cfg)
 	//database setup
+	storage, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize DB: %v", err)
+	}
+	slog.Info("Storage initialized", slog.String("env", cfg.Env), slog.String("Version", "1."))
 	//setup router
 	router := http.NewServeMux()
-	router.HandleFunc("POST /api/students", student.New())
+	router.HandleFunc("POST /api/students", student.New(storage))
 
 	//setup server
 	server := http.Server{
@@ -34,9 +40,8 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		err := server.ListenAndServe()
-		if err != nil {
-			log.Fatal("failed to start a server")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
