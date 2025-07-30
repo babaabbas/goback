@@ -2,8 +2,10 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/babaabbas/goback/internal/config"
+	"github.com/babaabbas/goback/internal/types"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -30,6 +32,24 @@ func (s *Sqlite) CreateStudent(name string, email string, age int) (int64, error
 	return lastid, nil
 	return 0, nil
 }
+func (s *Sqlite) GetStudentById(id int64) (types.Student, error) {
+	stmt, err := s.Db.Prepare(("SELECT id ,name, email, age FROM students WHERE id= ? LIMIT 1"))
+	if err != nil {
+		return types.Student{}, err
+	}
+
+	defer stmt.Close()
+	var student types.Student
+	err = stmt.QueryRow(id).Scan(&student.Id, &student.Name, &student.Email, &student.Age)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.Student{}, fmt.Errorf("no student found with id %s", fmt.Sprint(id))
+		}
+		return types.Student{}, fmt.Errorf("query error %w", err)
+	}
+	return student, nil
+
+}
 
 func New(cfg *config.Config) (*Sqlite, error) {
 	db, err := sql.Open("sqlite3", cfg.StoragePath)
@@ -50,4 +70,27 @@ func New(cfg *config.Config) (*Sqlite, error) {
 		Db: db,
 	}, nil
 
+}
+func (s *Sqlite) GetByList() ([]types.Student, error) {
+	stmt, err := s.Db.Prepare("SELECT id, name, email ,age FROM students")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var students []types.Student
+	for rows.Next() {
+		var student types.Student
+		rows.Scan(&student.Id, &student.Name, &student.Email, &student.Age)
+		if err != nil {
+			return nil, err
+		}
+		students = append(students, student)
+
+	}
+	return students, nil
 }
